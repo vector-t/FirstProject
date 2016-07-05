@@ -215,6 +215,8 @@ public class UILabelTestInspector : UIWidgetInspector
 
 			GUI.skin.textField.wordWrap = ww;
 
+			DrawAtlasProperties();
+
 			SerializedProperty ov = NGUIEditorTools.DrawPaddedProperty("Overflow", serializedObject, "mOverflow");
 			NGUISettings.overflowStyle = (UILabel.Overflow)ov.intValue;
 			if (NGUISettings.overflowStyle == UILabel.Overflow.ClampContent)
@@ -306,5 +308,37 @@ public class UILabelTestInspector : UIWidgetInspector
 		}
 		EditorGUI.EndDisabledGroup();
 		return isValid;
+	}
+
+	private void DrawAtlasProperties()
+	{
+		GUILayout.BeginHorizontal();
+		if (NGUIEditorTools.DrawPrefixButton("Atlas"))
+			ComponentSelector.Show<UIAtlas>(OnSelectAtlas);
+		SerializedProperty atlas = NGUIEditorTools.DrawProperty("", serializedObject, "mAtlas", GUILayout.MinWidth(20f));
+		
+		if (GUILayout.Button("Edit", GUILayout.Width(40f)))
+		{
+			if (atlas != null)
+			{
+				UIAtlas atl = atlas.objectReferenceValue as UIAtlas;
+				NGUISettings.atlas = atl;
+				if(atl != null)
+				{
+					NGUIEditorTools.Select(atl.gameObject);
+				}
+			}
+		}
+		GUILayout.EndHorizontal();
+	}
+
+	private void OnSelectAtlas (Object obj)
+	{
+		serializedObject.Update();
+		SerializedProperty sp = serializedObject.FindProperty("mAtlas");
+		sp.objectReferenceValue = obj;
+		serializedObject.ApplyModifiedProperties();
+		NGUITools.SetDirty(serializedObject.targetObject);
+		NGUISettings.atlas = obj as UIAtlas;
 	}
 }

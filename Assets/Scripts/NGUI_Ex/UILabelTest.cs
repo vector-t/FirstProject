@@ -35,6 +35,7 @@ public class UILabelTest : UIWidget
 	[MultilineAttribute(6)]
 #endif
 	[HideInInspector][SerializeField] string mText = "";
+	[HideInInspector][SerializeField] UIAtlas mAtlas = null;
 	[HideInInspector][SerializeField] int mFontSize = 16;
 	[HideInInspector][SerializeField] FontStyle mFontStyle = FontStyle.Normal;
 	[HideInInspector][SerializeField] Alignment mAlignment = Alignment.Automatic;
