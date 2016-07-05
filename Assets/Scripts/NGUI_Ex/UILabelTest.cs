@@ -7,26 +7,6 @@ using Alignment = NGUIText.Alignment;
 [AddComponentMenu("NGUI/UI/UILabelTest")]
 public class UILabelTest : UIWidget
 {
-	public enum Effect
-	{
-		None,
-		Shadow,
-		Outline,
-		Outline8,
-	}
-
-	public enum Crispness
-	{
-		Never,
-		OnDesktop,
-		Always,
-	}
-
-	/// <summary>
-	/// Whether the label will keep its content crisp even when shrunk.
-	/// You may want to turn this off on mobile devices.
-	/// </summary>
-
 	public Crispness keepCrispWhenShrunk = Crispness.OnDesktop;
 
 	[HideInInspector][SerializeField] Font mTrueTypeFont;
@@ -74,6 +54,33 @@ public class UILabelTest : UIWidget
 	[System.NonSerialized] int mFinalFontSize = 0;
 	[System.NonSerialized] int mLastWidth = 0;
 	[System.NonSerialized] int mLastHeight = 0;
+
+	public class UIRichLabelAssist 
+	{
+		public int depth;
+	}
+	[HideInInspector][SerializeField] UIRichLabelAssist mAssist;
+
+	int m_RichLabelAssistDepth;
+	public int RichLabelAssistDepth
+	{
+		get
+		{
+			return m_RichLabelAssistDepth;
+		}
+		set
+		{
+			if (m_RichLabelAssistDepth != value) {
+				m_RichLabelAssistDepth = value;
+				this.MarkAsChanged();
+				
+				if (mAssist != null) {
+					mAssist.depth = m_RichLabelAssistDepth;
+				}
+			}
+		}
+	}
+
 
 	/// <summary>
 	/// Font size after modifications got taken into consideration such as shrinking content.
