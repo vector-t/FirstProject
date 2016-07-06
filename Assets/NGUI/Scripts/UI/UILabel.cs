@@ -911,14 +911,14 @@ public class UILabel : UIWidget
 
 					if (usage == 0)
 					{
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 						font.textureRebuildCallback = null;
 #endif
 						mFontUsage.Remove(font);
 					}
 					else mFontUsage[font] = usage;
 				}
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 				else font.textureRebuildCallback = null;
 #endif
 			}
@@ -931,7 +931,7 @@ public class UILabel : UIWidget
 				int usage = 0;
 
 				// Font hasn't been used yet? Register a change delegate callback
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 				if (!mFontUsage.TryGetValue(font, out usage))
 					font.textureRebuildCallback = delegate() { OnFontChanged(font); };
 #endif

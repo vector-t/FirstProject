@@ -1,13 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-using Alignment = NGUIText.Alignment;
+using Alignment = NGUIExText.Alignment;
 
 [ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/UILabelTest")]
 public class UILabelTest : UIWidget
 {
-	public Crispness keepCrispWhenShrunk = Crispness.OnDesktop;
+	public UILabel.Crispness keepCrispWhenShrunk = UILabel.Crispness.OnDesktop;
 
 	[HideInInspector][SerializeField] Font mTrueTypeFont;
 	[HideInInspector][SerializeField] UIFont mFont;
@@ -21,9 +21,9 @@ public class UILabelTest : UIWidget
 	[HideInInspector][SerializeField] Alignment mAlignment = Alignment.Automatic;
 	[HideInInspector][SerializeField] bool mEncoding = true;
 	[HideInInspector][SerializeField] int mMaxLineCount = 0; // 0 denotes unlimited
-	[HideInInspector][SerializeField] Effect mEffectStyle = Effect.None;
+	[HideInInspector][SerializeField] UILabel.Effect mEffectStyle = UILabel.Effect.None;
 	[HideInInspector][SerializeField] Color mEffectColor = Color.black;
-	[HideInInspector][SerializeField] NGUIText.SymbolStyle mSymbols = NGUIText.SymbolStyle.Normal;
+	[HideInInspector][SerializeField] NGUIExText.SymbolStyle mSymbols = NGUIExText.SymbolStyle.Normal;
 	[HideInInspector][SerializeField] Vector2 mEffectDistance = Vector2.one;
 	[HideInInspector][SerializeField] UILabel.Overflow mOverflow = UILabel.Overflow.ShrinkContent;
 	[HideInInspector][SerializeField] Material mMaterial;
@@ -55,6 +55,12 @@ public class UILabelTest : UIWidget
 	[System.NonSerialized] int mLastWidth = 0;
 	[System.NonSerialized] int mLastHeight = 0;
 
+	public class FaceSyn
+	{
+		public string faceName;
+		public int index;
+		public BetterList<Vector3> poses;
+	}
 	public class UIRichLabelAssist 
 	{
 		public int depth;
@@ -554,10 +560,10 @@ public class UILabelTest : UIWidget
 	{
 		get
 		{
-			if (trueTypeFont != null && keepCrispWhenShrunk != Crispness.Never)
+			if (trueTypeFont != null && keepCrispWhenShrunk != UILabel.Crispness.Never)
 			{
 #if UNITY_IPHONE || UNITY_ANDROID || UNITY_WP8 || UNITY_WP_8_1 || UNITY_BLACKBERRY
-				return (keepCrispWhenShrunk == Crispness.Always);
+				return (keepCrispWhenShrunk == UILabel.Crispness.Always);
 #else
 				return true;
 #endif
@@ -590,7 +596,7 @@ public class UILabelTest : UIWidget
 	/// Style used for symbols.
 	/// </summary>
 
-	public NGUIText.SymbolStyle symbolStyle
+	public NGUIExText.SymbolStyle symbolStyle
 	{
 		get
 		{
@@ -732,7 +738,7 @@ public class UILabelTest : UIWidget
 	/// What effect is used by the label.
 	/// </summary>
 
-	public Effect effectStyle
+	public UILabel.Effect effectStyle
 	{
 		get
 		{
@@ -763,13 +769,13 @@ public class UILabelTest : UIWidget
 			if (mEffectColor != value)
 			{
 				mEffectColor = value;
-				if (mEffectStyle != Effect.None) shouldBeProcessed = true;
+				if (mEffectStyle != UILabel.Effect.None) shouldBeProcessed = true;
 			}
 		}
 	}
 
 	/// <summary>
-	/// Effect distance in pixels.
+	/// UILabel.Effect distance in pixels.
 	/// </summary>
 
 	public Vector2 effectDistance
@@ -906,14 +912,14 @@ public class UILabelTest : UIWidget
 
 					if (usage == 0)
 					{
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 						font.textureRebuildCallback = null;
 #endif
 						mFontUsage.Remove(font);
 					}
 					else mFontUsage[font] = usage;
 				}
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 				else font.textureRebuildCallback = null;
 #endif
 			}
@@ -926,7 +932,7 @@ public class UILabelTest : UIWidget
 				int usage = 0;
 
 				// Font hasn't been used yet? Register a change delegate callback
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 				if (!mFontUsage.TryGetValue(font, out usage))
 					font.textureRebuildCallback = delegate() { OnFontChanged(font); };
 #endif
@@ -1185,15 +1191,15 @@ public class UILabelTest : UIWidget
 		float regionX = mDrawRegion.z - mDrawRegion.x;
 		float regionY = mDrawRegion.w - mDrawRegion.y;
 
-		NGUIText.rectWidth    = legacyMode ? (mMaxLineWidth  != 0 ? mMaxLineWidth  : 1000000) : width;
-		NGUIText.rectHeight   = legacyMode ? (mMaxLineHeight != 0 ? mMaxLineHeight : 1000000) : height;
-		NGUIText.regionWidth  = (regionX != 1f) ? Mathf.RoundToInt(NGUIText.rectWidth  * regionX) : NGUIText.rectWidth;
-		NGUIText.regionHeight = (regionY != 1f) ? Mathf.RoundToInt(NGUIText.rectHeight * regionY) : NGUIText.rectHeight;
+		NGUIExText.rectWidth    = legacyMode ? (mMaxLineWidth  != 0 ? mMaxLineWidth  : 1000000) : width;
+		NGUIExText.rectHeight   = legacyMode ? (mMaxLineHeight != 0 ? mMaxLineHeight : 1000000) : height;
+		NGUIExText.regionWidth  = (regionX != 1f) ? Mathf.RoundToInt(NGUIExText.rectWidth  * regionX) : NGUIExText.rectWidth;
+		NGUIExText.regionHeight = (regionY != 1f) ? Mathf.RoundToInt(NGUIExText.rectHeight * regionY) : NGUIExText.rectHeight;
 
 		mFinalFontSize = Mathf.Abs(legacyMode ? Mathf.RoundToInt(cachedTransform.localScale.x) : defaultFontSize);
 		mScale = 1f;
 
-		if (NGUIText.regionWidth < 1 || NGUIText.regionHeight < 0)
+		if (NGUIExText.regionWidth < 1 || NGUIExText.regionHeight < 0)
 		{
 			mProcessedText = "";
 			return;
@@ -1208,18 +1214,18 @@ public class UILabelTest : UIWidget
 		}
 		else mDensity = 1f;
 
-		if (full) UpdateNGUIText();
+		if (full) UpdateNGUIExText();
 
 		if (mOverflow ==UILabel.Overflow.ResizeFreely)
 		{
-			NGUIText.rectWidth = 1000000;
-			NGUIText.regionWidth = 1000000;
+			NGUIExText.rectWidth = 1000000;
+			NGUIExText.regionWidth = 1000000;
 		}
 
 		if (mOverflow ==UILabel.Overflow.ResizeFreely || mOverflow ==UILabel.Overflow.ResizeHeight)
 		{
-			NGUIText.rectHeight = 1000000;
-			NGUIText.regionHeight = 1000000;
+			NGUIExText.rectHeight = 1000000;
+			NGUIExText.regionHeight = 1000000;
 		}
 
 		if (mFinalFontSize > 0)
@@ -1232,19 +1238,19 @@ public class UILabelTest : UIWidget
 				if (adjustSize)
 				{
 					mFinalFontSize = ps;
-					NGUIText.fontSize = mFinalFontSize;
+					NGUIExText.fontSize = mFinalFontSize;
 				}
 				else
 				{
 					mScale = (float)ps / mFinalFontSize;
-					NGUIText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
+					NGUIExText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
 				}
 
-				NGUIText.Update(false);
+				NGUIExText.Update(false);
 
 				// Wrap the text
-				bool fits = NGUIText.WrapText(mText, out mProcessedText, true, false,
-					mOverflowEllipsis && mOverflow ==UILabel.Overflow.ClampContent);
+				bool fits = NGUIExText.WrapText(mText, out mProcessedText, true, false,
+					mOverflowEllipsis && mOverflow == UILabel.Overflow.ClampContent);
 
 				if (mOverflow ==UILabel.Overflow.ShrinkContent && !fits)
 				{
@@ -1253,7 +1259,7 @@ public class UILabelTest : UIWidget
 				}
 				else if (mOverflow ==UILabel.Overflow.ResizeFreely)
 				{
-					mCalculatedSize = NGUIText.CalculatePrintedSize(mProcessedText);
+					mCalculatedSize = NGUIExText.CalculatePrintedSize(mProcessedText);
 
 					mWidth = Mathf.Max(minWidth, Mathf.RoundToInt(mCalculatedSize.x));
 					if (regionX != 1f) mWidth = Mathf.RoundToInt(mWidth / regionX);
@@ -1265,14 +1271,14 @@ public class UILabelTest : UIWidget
 				}
 				else if (mOverflow ==UILabel.Overflow.ResizeHeight)
 				{
-					mCalculatedSize = NGUIText.CalculatePrintedSize(mProcessedText);
+					mCalculatedSize = NGUIExText.CalculatePrintedSize(mProcessedText);
 					mHeight = Mathf.Max(minHeight, Mathf.RoundToInt(mCalculatedSize.y));
 					if (regionY != 1f) mHeight = Mathf.RoundToInt(mHeight / regionY);
 					if ((mHeight & 1) == 1) ++mHeight;
 				}
 				else
 				{
-					mCalculatedSize = NGUIText.CalculatePrintedSize(mProcessedText);
+					mCalculatedSize = NGUIExText.CalculatePrintedSize(mProcessedText);
 				}
 
 				// Upgrade to the new system
@@ -1294,8 +1300,8 @@ public class UILabelTest : UIWidget
 		
 		if (full)
 		{
-			NGUIText.bitmapFont = null;
-			NGUIText.dynamicFont = null;
+			NGUIExText.bitmapFont = null;
+			NGUIExText.dynamicFont = null;
 		}
 	}
 
@@ -1399,28 +1405,28 @@ public class UILabelTest : UIWidget
 			string text = processedText;
 			if (string.IsNullOrEmpty(text)) return 0;
 
-			UpdateNGUIText();
+			UpdateNGUIExText();
 
-			if (precise) NGUIText.PrintExactCharacterPositions(text, mTempVerts, mTempIndices);
-			else NGUIText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
+			if (precise) NGUIExText.PrintExactCharacterPositions(text, mTempVerts, mTempIndices);
+			else NGUIExText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
 
 			if (mTempVerts.size > 0)
 			{
 				ApplyOffset(mTempVerts, 0);
 				int retVal = precise ?
-					NGUIText.GetExactCharacterIndex(mTempVerts, mTempIndices, localPos) :
-					NGUIText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
+					NGUIExText.GetExactCharacterIndex(mTempVerts, mTempIndices, localPos) :
+					NGUIExText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
 
 				mTempVerts.Clear();
 				mTempIndices.Clear();
 
-				NGUIText.bitmapFont = null;
-				NGUIText.dynamicFont = null;
+				NGUIExText.bitmapFont = null;
+				NGUIExText.dynamicFont = null;
 				return retVal;
 			}
 
-			NGUIText.bitmapFont = null;
-			NGUIText.dynamicFont = null;
+			NGUIExText.bitmapFont = null;
+			NGUIExText.dynamicFont = null;
 		}
 		return 0;
 	}
@@ -1469,7 +1475,7 @@ public class UILabelTest : UIWidget
 				if (len > 0)
 				{
 					string word = mText.Substring(wordStart, len);
-					return NGUIText.StripSymbols(word);
+					return NGUIExText.StripSymbols(word);
 				}
 			}
 		}
@@ -1580,9 +1586,9 @@ public class UILabelTest : UIWidget
 			if (string.IsNullOrEmpty(text)) return 0;
 
 			int def = defaultFontSize;
-			UpdateNGUIText();
+			UpdateNGUIExText();
 
-			NGUIText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
+			NGUIExText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
 
 			if (mTempVerts.size > 0)
 			{
@@ -1601,7 +1607,7 @@ public class UILabelTest : UIWidget
 						else if (key == KeyCode.End) localPos.x += 1000f;
 
 						// Find the closest character to this position
-						int retVal = NGUIText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
+						int retVal = NGUIExText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
 						if (retVal == currentIndex) break;
 
 						mTempVerts.Clear();
@@ -1613,8 +1619,8 @@ public class UILabelTest : UIWidget
 				mTempIndices.Clear();
 			}
 
-			NGUIText.bitmapFont = null;
-			NGUIText.dynamicFont = null;
+			NGUIExText.bitmapFont = null;
+			NGUIExText.dynamicFont = null;
 
 			// If the selection doesn't move, then we're at the top or bottom-most line
 			if (key == KeyCode.UpArrow || key == KeyCode.Home) return 0;
@@ -1634,7 +1640,7 @@ public class UILabelTest : UIWidget
 		if (!isValid) return;
 
 		string text = processedText;
-		UpdateNGUIText();
+		UpdateNGUIExText();
 
 		int startingCaretVerts = caret.verts.size;
 		Vector2 center = new Vector2(0.5f, 0.5f);
@@ -1644,7 +1650,7 @@ public class UILabelTest : UIWidget
 		if (highlight != null && start != end)
 		{
 			int startingVertices = highlight.verts.size;
-			NGUIText.PrintCaretAndSelection(text, start, end, caret.verts, highlight.verts);
+			NGUIExText.PrintCaretAndSelection(text, start, end, caret.verts, highlight.verts);
 
 			if (highlight.verts.size > startingVertices)
 			{
@@ -1659,7 +1665,7 @@ public class UILabelTest : UIWidget
 				}
 			}
 		}
-		else NGUIText.PrintCaretAndSelection(text, start, end, caret.verts, null);
+		else NGUIExText.PrintCaretAndSelection(text, start, end, caret.verts, null);
 
 		// Fill the caret UVs and colors
 		ApplyOffset(caret.verts, startingCaretVerts);
@@ -1671,8 +1677,8 @@ public class UILabelTest : UIWidget
 			caret.cols.Add(cc);
 		}
 
-		NGUIText.bitmapFont = null;
-		NGUIText.dynamicFont = null;
+		NGUIExText.bitmapFont = null;
+		NGUIExText.dynamicFont = null;
 	}
 
 	/// <summary>
@@ -1700,21 +1706,21 @@ public class UILabelTest : UIWidget
 		string text = processedText;
 		int start = verts.size;
 
-		UpdateNGUIText();
+		UpdateNGUIExText();
 
-		NGUIText.tint = col;
-		NGUIText.Print(text, verts, uvs, cols);
-		NGUIText.bitmapFont = null;
-		NGUIText.dynamicFont = null;
+		NGUIExText.tint = col;
+		NGUIExText.Print(text, verts, uvs, cols);
+		NGUIExText.bitmapFont = null;
+		NGUIExText.dynamicFont = null;
 
 		// Center the content within the label vertically
 		Vector2 pos = ApplyOffset(verts, start);
 
-		// Effects don't work with packed fonts
+		// UILabel.Effects don't work with packed fonts
 		if (mFont != null && mFont.packedFontShader) return;
 
 		// Apply an effect if one was requested
-		if (effectStyle != Effect.None)
+		if (effectStyle != UILabel.Effect.None)
 		{
 			int end = verts.size;
 			pos.x = mEffectDistance.x;
@@ -1722,7 +1728,7 @@ public class UILabelTest : UIWidget
 
 			ApplyShadow(verts, uvs, cols, offset, end, pos.x, -pos.y);
 
-			if ((effectStyle == Effect.Outline) || (effectStyle == Effect.Outline8))
+			if ((effectStyle == UILabel.Effect.Outline) || (effectStyle == UILabel.Effect.Outline8))
 			{
 				offset = end;
 				end = verts.size;
@@ -1739,7 +1745,7 @@ public class UILabelTest : UIWidget
 
 				ApplyShadow(verts, uvs, cols, offset, end, -pos.x, -pos.y);
 
-				if (effectStyle == Effect.Outline8)
+				if (effectStyle == UILabel.Effect.Outline8)
 				{
 					offset = end;
 					end = verts.size;
@@ -1843,12 +1849,12 @@ public class UILabelTest : UIWidget
 
 	public int CalculateOffsetToFit (string text)
 	{
-		UpdateNGUIText();
-		NGUIText.encoding = false;
-		NGUIText.symbolStyle = NGUIText.SymbolStyle.None;
-		int offset = NGUIText.CalculateOffsetToFit(text);
-		NGUIText.bitmapFont = null;
-		NGUIText.dynamicFont = null;
+		UpdateNGUIExText();
+		NGUIExText.encoding = false;
+		NGUIExText.symbolStyle = NGUIExText.SymbolStyle.None;
+		int offset = NGUIExText.CalculateOffsetToFit(text);
+		NGUIExText.bitmapFont = null;
+		NGUIExText.dynamicFont = null;
 		return offset;
 	}
 
@@ -1901,79 +1907,80 @@ public class UILabelTest : UIWidget
 
 	public bool Wrap (string text, out string final, int height)
 	{
-		UpdateNGUIText();
-		NGUIText.rectHeight = height;
-		NGUIText.regionHeight = height;
-		bool retVal = NGUIText.WrapText(text, out final);
-		NGUIText.bitmapFont = null;
-		NGUIText.dynamicFont = null;
+		UpdateNGUIExText();
+		NGUIExText.rectHeight = height;
+		NGUIExText.regionHeight = height;
+		bool retVal = NGUIExText.WrapText(text, out final);
+		NGUIExText.bitmapFont = null;
+		NGUIExText.dynamicFont = null;
 		return retVal;
 	}
 
 	/// <summary>
-	/// Update NGUIText.current with all the properties from this label.
+	/// Update NGUIExText.current with all the properties from this label.
 	/// </summary>
 
-	public void UpdateNGUIText ()
+	public void UpdateNGUIExText ()
 	{
 		Font ttf = trueTypeFont;
 		bool isDynamic = (ttf != null);
 
-		NGUIText.fontSize = mFinalFontSize;
-		NGUIText.fontStyle = mFontStyle;
-		NGUIText.rectWidth = mWidth;
-		NGUIText.rectHeight = mHeight;
-		NGUIText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
-		NGUIText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
-		NGUIText.gradient = mApplyGradient && (mFont == null || !mFont.packedFontShader);
-		NGUIText.gradientTop = mGradientTop;
-		NGUIText.gradientBottom = mGradientBottom;
-		NGUIText.encoding = mEncoding;
-		NGUIText.premultiply = mPremultiply;
-		NGUIText.symbolStyle = mSymbols;
-		NGUIText.maxLines = mMaxLineCount;
-		NGUIText.spacingX = effectiveSpacingX;
-		NGUIText.spacingY = effectiveSpacingY;
-		NGUIText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
+		NGUIExText.fontSize = mFinalFontSize;
+		NGUIExText.fontStyle = mFontStyle;
+		NGUIExText.rectWidth = mWidth;
+		NGUIExText.rectHeight = mHeight;
+		NGUIExText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
+		NGUIExText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
+		NGUIExText.gradient = mApplyGradient && (mFont == null || !mFont.packedFontShader);
+		NGUIExText.gradientTop = mGradientTop;
+		NGUIExText.gradientBottom = mGradientBottom;
+		NGUIExText.encoding = mEncoding;
+		NGUIExText.premultiply = mPremultiply;
+		NGUIExText.symbolStyle = mSymbols;
+		NGUIExText.maxLines = mMaxLineCount;
+		NGUIExText.spacingX = effectiveSpacingX;
+		NGUIExText.spacingY = effectiveSpacingY;
+		NGUIExText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
+        NGUIExText.faceAtlas = mAtlas;
 
-		if (mFont != null)
+        if (mFont != null)
 		{
-			NGUIText.bitmapFont = mFont;
+			NGUIExText.bitmapFont = mFont;
 			
 			for (; ; )
 			{
-				UIFont fnt = NGUIText.bitmapFont.replacement;
+				UIFont fnt = NGUIExText.bitmapFont.replacement;
 				if (fnt == null) break;
-				NGUIText.bitmapFont = fnt;
+				NGUIExText.bitmapFont = fnt;
 			}
 
-			if (NGUIText.bitmapFont.isDynamic)
+			if (NGUIExText.bitmapFont.isDynamic)
 			{
-				NGUIText.dynamicFont = NGUIText.bitmapFont.dynamicFont;
-				NGUIText.bitmapFont = null;
+				NGUIExText.dynamicFont = NGUIExText.bitmapFont.dynamicFont;
+				NGUIExText.bitmapFont = null;
 			}
-			else NGUIText.dynamicFont = null;
+			else NGUIExText.dynamicFont = null;
 		}
 		else
 		{
-			NGUIText.dynamicFont = ttf;
-			NGUIText.bitmapFont = null;
+			NGUIExText.dynamicFont = ttf;
+			NGUIExText.bitmapFont = null;
 		}
 
 		if (isDynamic && keepCrisp)
 		{
 			UIRoot rt = root;
-			if (rt != null) NGUIText.pixelDensity = (rt != null) ? rt.pixelSizeAdjustment : 1f;
+			if (rt != null) NGUIExText.pixelDensity = (rt != null) ? rt.pixelSizeAdjustment : 1f;
 		}
-		else NGUIText.pixelDensity = 1f;
+		else NGUIExText.pixelDensity = 1f;
 
-		if (mDensity != NGUIText.pixelDensity)
+		if (mDensity != NGUIExText.pixelDensity)
 		{
 			ProcessText(false, false);
-			NGUIText.rectWidth = mWidth;
-			NGUIText.rectHeight = mHeight;
-			NGUIText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
-			NGUIText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
+			NGUIExText.rectWidth = mWidth;
+			NGUIExText.rectHeight = mHeight;
+			NGUIExText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
+			NGUIExText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
 		}
 
 		if (alignment == Alignment.Automatic)
@@ -1982,17 +1989,17 @@ public class UILabelTest : UIWidget
 
 			if (p == Pivot.Left || p == Pivot.TopLeft || p == Pivot.BottomLeft)
 			{
-				NGUIText.alignment = Alignment.Left;
+				NGUIExText.alignment = Alignment.Left;
 			}
 			else if (p == Pivot.Right || p == Pivot.TopRight || p == Pivot.BottomRight)
 			{
-				NGUIText.alignment = Alignment.Right;
+				NGUIExText.alignment = Alignment.Right;
 			}
-			else NGUIText.alignment = Alignment.Center;
+			else NGUIExText.alignment = Alignment.Center;
 		}
-		else NGUIText.alignment = alignment;
+		else NGUIExText.alignment = alignment;
 
-		NGUIText.Update();
+		NGUIExText.Update();
 	}
 
 	void OnApplicationPause (bool paused)

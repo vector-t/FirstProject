@@ -201,7 +201,7 @@ static public class NGUIMenu
 	{
 		if (UIRoot.list.Count == 0 || UICamera.list.size == 0) return true;
 		foreach (UICamera c in UICamera.list)
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 			if (NGUITools.GetActive(c) && c.camera.isOrthoGraphic)
 #else
 			if (NGUITools.GetActive(c) && c.GetComponent<Camera>().orthographic)
@@ -220,7 +220,7 @@ static public class NGUIMenu
 	{
 		if (UIRoot.list.Count == 0 || UICamera.list.size == 0) return true;
 		foreach (UICamera c in UICamera.list)
-#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6
+#if UNITY_4_3 || UNITY_4_5 || UNITY_4_6 || UNITY_4_7
 			if (NGUITools.GetActive(c) && !c.camera.isOrthoGraphic)
 #else
 			if (NGUITools.GetActive(c) && !c.GetComponent<Camera>().orthographic)
