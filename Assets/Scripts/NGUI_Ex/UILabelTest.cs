@@ -3,9 +3,16 @@ using System.Collections.Generic;
 using System;
 using Alignment = NGUIExText.Alignment;
 
+public class FaceSyn
+{
+	public string faceName;
+	public int index;
+	public BetterList<Vector3> poses;
+}
+
 [ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/UILabelTest")]
-public class UILabelTest : UIWidget
+public class UIRichLabel : UIWidget
 {
 	public UILabel.Crispness keepCrispWhenShrunk = UILabel.Crispness.OnDesktop;
 
@@ -55,35 +62,29 @@ public class UILabelTest : UIWidget
 	[System.NonSerialized] int mLastWidth = 0;
 	[System.NonSerialized] int mLastHeight = 0;
 
-	public class FaceSyn
-	{
-		public string faceName;
-		public int index;
-		public BetterList<Vector3> poses;
-	}
-	public class UIRichLabelAssist 
-	{
-		public int depth;
-	}
 	[HideInInspector][SerializeField] UIRichLabelAssist mAssist;
 
-	int m_RichLabelAssistDepth;
-	public int RichLabelAssistDepth
+	public UIRichLabelAssist richLableAssist
 	{
 		get
 		{
-			return m_RichLabelAssistDepth;
-		}
-		set
-		{
-			if (m_RichLabelAssistDepth != value) {
-				m_RichLabelAssistDepth = value;
-				this.MarkAsChanged();
-				
-				if (mAssist != null) {
-					mAssist.depth = m_RichLabelAssistDepth;
+			if (mAssist == null) {
+				if (transform.childCount > 0)
+					mAssist = cachedTransform.GetComponent<UIRichLabelAssist>();
+
+				if (mAssist == null) {
+					GameObject go = new GameObject("Assist");
+					go.transform.parent = cachedTransform;
+					go.transform.localPosition = Vector3.zero;
+					go.transform.localScale = Vector3.one;
+					mAssist = go.AddComponent<UIRichLabelAssist>();
 				}
 			}
+			if (mAssist != null) {
+				mAssist.atlas = mAtlas;
+				mAssist.depth = depth + 1;
+			}
+			return mAssist;
 		}
 	}
 
@@ -1709,7 +1710,11 @@ public class UILabelTest : UIWidget
 		UpdateNGUIExText();
 
 		NGUIExText.tint = col;
-		NGUIExText.Print(text, verts, uvs, cols);
+
+		List<FaceSyn> slist = NGUIExText.Print(text, verts, uvs, cols);
+		ApplyFacesOffset(slist);
+		richLableAssist.Faces = slist;
+
 		NGUIExText.bitmapFont = null;
 		NGUIExText.dynamicFont = null;
 
@@ -1772,6 +1777,8 @@ public class UILabelTest : UIWidget
 
 		if (onPostFill != null)
 			onPostFill(this, offset, verts, uvs, cols);
+
+		AdjustAssist();
 	}
 
 	/// <summary>
@@ -2005,5 +2012,38 @@ public class UILabelTest : UIWidget
 	void OnApplicationPause (bool paused)
 	{
 		if (!paused && mTrueTypeFont != null) Invalidate(false);
+	}
+
+	protected Vector2 ApplyFacesOffset (List<FaceSyn> list)
+	{
+		Vector2 po = pivotOffset;
+
+		float fx = Mathf.Lerp(0f, -mWidth, po.x);
+		float fy = Mathf.Lerp(mHeight, 0f, po.y) + Mathf.Lerp((mCalculatedSize.y - mHeight), 0f, po.y);
+
+		fx = Mathf.Round(fx);
+		fy = Mathf.Round(fy);
+
+		for (int i = 0; i < list.Count; i++) {
+			FaceSyn face = list[i];
+			if (face.poses != null && face.poses.size == 4) {
+				for (int j = 0; j < 4; j++) {
+					face.poses.buffer[j].x += fx;
+					face.poses.buffer[j].y += fy;
+				}
+
+			}
+		}
+		return new Vector2(fx, fy);
+	}
+
+	private void AdjustAssist ()
+	{
+		if (richLableAssist == null)
+			return;
+		richLableAssist.pivot = pivot;
+		richLableAssist.width = width;
+		richLableAssist.height = mHeight;
+		richLableAssist.cachedTransform.localPosition = Vector3.zero;
 	}
 }
