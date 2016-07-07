@@ -16,7 +16,7 @@ using System.Collections.Generic;
 /// Helper class containing functionality related to using dynamic fonts.
 /// </summary>
 
-static public partial class NGUIExText
+static public partial class NGUIRichText
 {
 	public enum Alignment
 	{
@@ -85,8 +85,7 @@ static public partial class NGUIExText
 	static public float finalLineHeight = 0f;
 	static public float baseline = 0f;
 	static public bool useSymbols = false;
-    static public UIAtlas faceAtlas = null;
-    //static public BMSymbol customSymbol = null;
+	static public UIAtlas atlas = null;
 
     /// <summary>
     /// Recalculate the 'final' values.
@@ -960,21 +959,19 @@ static public partial class NGUIExText
 				if (ch < ' ') continue;
 
 				// See if there is a symbol matching this text
+				BMSymbol customSymbol = encoding ? GetCustomSymbol(text, ref i, textLength) : null;
 				BMSymbol symbol = useSymbols ? GetSymbol(text, i, textLength) : null;
-				BMSymbol customSymbol = encoding ? MatchCustomSymbol (text, i, textLength) : null;
 				if (customSymbol != null) 
 				{
 					float w = finalSpacingX + fontSize * fontScale;
-
-					if (Mathf.RoundToInt(x + w) > regionWidth)
+					
+					if (Mathf.RoundToInt(x + w) > rectWidth)
 					{
 						if (x > maxX) maxX = x - finalSpacingX;
 						x = w;
 						y += finalLineHeight;
 					}
 					else x += w;
-
-					i += 2 + customSymbol.sequence.Length - 1;
 					prev = 0;
 				} 
 				else if (symbol != null) 
@@ -1132,7 +1129,7 @@ static public partial class NGUIExText
 		{
 			mColors.Add(c);
 			sb.Append("[");
-			sb.Append(NGUIExText.EncodeColor(c));
+			sb.Append(NGUIRichText.EncodeColor(c));
 			sb.Append("]");
 		}
 
@@ -1205,10 +1202,9 @@ static public partial class NGUIExText
 				}
 			}
 
-            #region BMSymbol
+			BMSymbol customSymbol = encoding ? GetCustomSymbol(text, ref offset, textLength) : null;
             // See if there is a symbol matching this text
             BMSymbol symbol = useSymbols ? GetSymbol(text, offset, textLength) : null;
-            BMSymbol customSymbol = encoding ? GetCustomSymbol(text, ref offset) : null;
 
 			// Calculate how wide this symbol or character is going to be
 			float glyphWidth;
@@ -1230,7 +1226,6 @@ static public partial class NGUIExText
 
 			// Reduce the width
 			remainingWidth -= glyphWidth;
-            #endregion
 
             // If this marks the end of a word, add it to the final string.
             if (IsSpace(ch) && !eastern && start < offset)
@@ -1388,7 +1383,7 @@ static public partial class NGUIExText
 	/// Print the specified text into the buffers.
 	/// </summary>
 
-	static public List<FaceSyn> Print (string text, BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	static public List<AssistData> Print (string text, BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
 	{
 		if (string.IsNullOrEmpty(text)) return null;
 
@@ -1421,8 +1416,7 @@ static public partial class NGUIExText
 		bool strikethrough = false;
 		bool ignoreColor = false;
 		const float sizeShrinkage = 0.75f;
-		List<FaceSyn> sptList = new List<FaceSyn>();
-		int sptListLength = 0;
+		List<AssistData> assistDataList = new List<AssistData> ();
 
 		float v0x;
 		float v1x;
@@ -1466,16 +1460,9 @@ static public partial class NGUIExText
 				prev = ch;
 				continue;
 			}
-			BMSymbol customSymbol = GetCustomSymbol (text, ref i);
-			sptListLength = sptList.Count;
-			if (encoding && customSymbol != null) 
-			{
-				FaceSyn faceSyn = new FaceSyn();
-				faceSyn.faceName = customSymbol.spriteName;
-				sptList.Add(faceSyn);
-			}
+
 			// Color changing symbol
-			else if (encoding && ParseSymbol(text, ref i, mColors, premultiply, ref subscriptMode, ref bold,
+			if (encoding && ParseSymbol(text, ref i, mColors, premultiply, ref subscriptMode, ref bold,
 				ref italic, ref underline, ref strikethrough, ref ignoreColor))
 			{
 				Color fc;
@@ -1504,43 +1491,78 @@ static public partial class NGUIExText
 				continue;
 			}
 
+			BMSymbol customSymbol = encoding ? MatchCustomSymbol(text, i, textLength) : null;
 			// See if there is a symbol matching this text
 			BMSymbol symbol = useSymbols ? GetSymbol(text, i, textLength) : null;
 
-			if (customSymbol != null && sptListLength < sptList.Count)
+			if(customSymbol != null)
 			{
-				v0x = x + customSymbol.offsetX/* * fontScale*/;
-				v1x = v0x + fontSize;
-
-				v1y = -y + (fontSize - fontSize) * 0.5f;
-				v0y = v1y - fontSize;
-
-				x += finalSpacingX + fontSize;
+				v0x = x + customSymbol.offsetX * fontScale;
+				v1x = v0x + fontSize * fontScale;
+				v1y = -(y + customSymbol.offsetY * fontScale);
+				v0y = v1y - fontSize * fontScale;
+				
+				// Doesn't fit? Move down to the next line
+				if (Mathf.RoundToInt(x + fontSize * fontScale) > rectWidth)
+				{
+					if (x == 0f) return assistDataList;
+					
+					if (alignment != Alignment.Left && indexOffset < verts.size)
+					{
+						Align(verts, indexOffset, x - finalSpacingX);
+						indexOffset = verts.size;
+					}
+					
+					v0x -= x;
+					v1x -= x;
+					v0y -= finalLineHeight;
+					v1y -= finalLineHeight;
+					
+					x = 0;
+					y += finalLineHeight;
+					prevX = 0;
+				}
+				Vector3 pos1 = new Vector3(v0x, v0y);
+				Vector3 pos2 = new Vector3(v0x, v1y);
+				Vector3 pos3 = new Vector3(v1x, v1y);
+				Vector3 pos4 = new Vector3(v1x, v0y);
+				assistDataList.Add( new AssistData() { index = verts.size,  spriteName = customSymbol.sequence, pos1 = pos1, pos2 = pos2, pos3 = pos3, pos4 = pos4 });
+				verts.Add(pos1);
+				verts.Add(pos2);
+				verts.Add(pos3);
+				verts.Add(pos4);
+				x += finalSpacingX + fontSize * fontScale;
+				i += customSymbol.length + 2 - 1;
 				prev = 0;
-
-				BetterList<Vector3> btv = new BetterList<Vector3>();
-				btv.Add(new Vector3(v0x, v0y));
-				btv.Add(new Vector3(v0x, v1y));
-				btv.Add(new Vector3(v1x, v1y));
-				btv.Add(new Vector3(v1x, v0y));
-
-				sptList[sptListLength].poses = btv;
-				sptList[sptListLength].index = verts.size;
-
-				verts.Add(new Vector3(v0x, v0y));
-				verts.Add(new Vector3(v0x, v1y));
-				verts.Add(new Vector3(v1x, v1y));
-				verts.Add(new Vector3(v1x, v0y));
-
-				cols.Add(Color.clear);
-				cols.Add(Color.clear);
-				cols.Add(Color.clear);
-				cols.Add(Color.clear);
-
-				uvs.Add(Vector2.zero);
-				uvs.Add(Vector2.up);
-				uvs.Add(Vector2.one);
-				uvs.Add(Vector2.right);
+				
+				if (uvs != null)
+				{
+					Rect uv = customSymbol.uvRect;
+					
+					float u0x = uv.xMin;
+					float u0y = uv.yMin;
+					float u1x = uv.xMax;
+					float u1y = uv.yMax;
+					
+					uvs.Add(new Vector2(u0x, u0y));
+					uvs.Add(new Vector2(u0x, u1y));
+					uvs.Add(new Vector2(u1x, u1y));
+					uvs.Add(new Vector2(u1x, u0y));
+				}
+				
+				if (cols != null)
+				{
+					if (symbolStyle == SymbolStyle.Colored)
+					{
+						for (int b = 0; b < 4; ++b) cols.Add(uc);
+					}
+					else
+					{
+						Color32 col = Color.white;
+						col.a = uc.a;
+						for (int b = 0; b < 4; ++b) cols.Add(col);
+					}
+				}
 			}
 			else if (symbol != null)
 			{
@@ -1891,8 +1913,18 @@ static public partial class NGUIExText
 			Align(verts, indexOffset, x - finalSpacingX);
 			indexOffset = verts.size;
 		}
+		if(alignment != Alignment.Left && assistDataList != null && assistDataList.Count > 0)
+		{
+			for (int i = 0; i < assistDataList.Count; i++)
+			{
+				assistDataList[i].pos1 = verts[assistDataList[i].index + 0];
+				assistDataList[i].pos2 = verts[assistDataList[i].index + 1];
+				assistDataList[i].pos3 = verts[assistDataList[i].index + 2];
+				assistDataList[i].pos4 = verts[assistDataList[i].index + 3];
+			}
+		}
 		mColors.Clear();
-		return sptList;
+		return assistDataList;
 	}
 
 	static float[] mBoldOffset = new float[]
@@ -2349,5 +2381,51 @@ static public partial class NGUIExText
 			if (alignment != Alignment.Left && highlightOffset < highlight.size)
 				Align(highlight, highlightOffset, x - finalSpacingX);
 		}
+	}
+
+	static public BMSymbol GetCustomSymbol(string text, ref int index, int length)
+	{
+		BMSymbol bmSymbol = MatchCustomSymbol(text, index, length);
+		
+		if (bmSymbol != null)
+			index = index + 2 + bmSymbol.sequence.Length - 1;
+		
+		return bmSymbol;
+	}
+	
+	static private BMSymbol MatchCustomSymbol(string text, int index, int length)
+	{
+		if (index == length || index + 2 > length || text [index] != '#') return null;
+		
+		int endIndex = index + 1;
+		bool isSymbol = false;
+		
+		while (endIndex < length) {
+			if(text[endIndex] == '#')
+			{
+				isSymbol = true;
+				break;
+			}
+			endIndex++;
+		}
+		if (isSymbol) 
+			return GetCustomSymbolData (text.Substring (index + 1, endIndex - index - 1));
+		else
+			return null;
+	}
+	
+	static private BMSymbol GetCustomSymbolData(string spriteName)
+	{
+		if (string.IsNullOrEmpty(spriteName) || atlas == null)
+			return null;
+		
+		BMSymbol bmSymbol = new BMSymbol();
+		bmSymbol.spriteName = spriteName;
+		if (bmSymbol.Validate (atlas))
+			bmSymbol.sequence = spriteName;
+		else
+			bmSymbol = null;
+		
+		return bmSymbol;
 	}
 }

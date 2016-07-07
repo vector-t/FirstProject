@@ -1,17 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-using Alignment = NGUIExText.Alignment;
+using Alignment = NGUIRichText.Alignment;
 
-public class FaceSyn
-{
-	public string faceName;
-	public int index;
-	public BetterList<Vector3> poses;
-}
-
-[ExecuteInEditMode]
-[AddComponentMenu("NGUI/UI/UILabelTest")]
+[ExecuteInEditMode][RequireComponent(typeof(UIRichLabelAssist))]
+[AddComponentMenu("NGUI/UI/UIRichLabel")]
 public class UIRichLabel : UIWidget
 {
 	public UILabel.Crispness keepCrispWhenShrunk = UILabel.Crispness.OnDesktop;
@@ -30,7 +23,7 @@ public class UIRichLabel : UIWidget
 	[HideInInspector][SerializeField] int mMaxLineCount = 0; // 0 denotes unlimited
 	[HideInInspector][SerializeField] UILabel.Effect mEffectStyle = UILabel.Effect.None;
 	[HideInInspector][SerializeField] Color mEffectColor = Color.black;
-	[HideInInspector][SerializeField] NGUIExText.SymbolStyle mSymbols = NGUIExText.SymbolStyle.Normal;
+	[HideInInspector][SerializeField] NGUIRichText.SymbolStyle mSymbols = NGUIRichText.SymbolStyle.Normal;
 	[HideInInspector][SerializeField] Vector2 mEffectDistance = Vector2.one;
 	[HideInInspector][SerializeField] UILabel.Overflow mOverflow = UILabel.Overflow.ShrinkContent;
 	[HideInInspector][SerializeField] Material mMaterial;
@@ -64,26 +57,23 @@ public class UIRichLabel : UIWidget
 
 	[HideInInspector][SerializeField] UIRichLabelAssist mAssist;
 
-	public UIRichLabelAssist richLableAssist
+	private UIRichLabelAssist RichLabelAssist
 	{
 		get
 		{
-			if (mAssist == null) {
-				if (transform.childCount > 0)
-					mAssist = cachedTransform.GetComponent<UIRichLabelAssist>();
-
-				if (mAssist == null) {
-					GameObject go = new GameObject("Assist");
-					go.transform.parent = cachedTransform;
-					go.transform.localPosition = Vector3.zero;
-					go.transform.localScale = Vector3.one;
-					mAssist = go.AddComponent<UIRichLabelAssist>();
+			if(mAssist == null)
+			{
+				mAssist = gameObject.GetComponent<UIRichLabelAssist>();
+				if(mAssist == null)
+				{
+					mAssist = gameObject.AddComponent<UIRichLabelAssist>();
 				}
 			}
-			if (mAssist != null) {
-				mAssist.atlas = mAtlas;
-				mAssist.depth = depth + 1;
-			}
+			mAssist.width = 0;
+			mAssist.height = 0;
+			mAssist.pivot = Pivot.Center;
+			mAssist.depth = depth + 1;
+			mAssist.atlas = mAtlas;
 			return mAssist;
 		}
 	}
@@ -597,7 +587,7 @@ public class UIRichLabel : UIWidget
 	/// Style used for symbols.
 	/// </summary>
 
-	public NGUIExText.SymbolStyle symbolStyle
+	public NGUIRichText.SymbolStyle symbolStyle
 	{
 		get
 		{
@@ -868,7 +858,7 @@ public class UIRichLabel : UIWidget
 
 	bool isValid { get { return mFont != null || mTrueTypeFont != null; } }
 
-	static BetterList<UILabelTest> mList = new BetterList<UILabelTest>();
+	static BetterList<UIRichLabel> mList = new BetterList<UIRichLabel>();
 	static Dictionary<Font, int> mFontUsage = new Dictionary<Font, int>();
 
 	/// <summary>
@@ -959,7 +949,7 @@ public class UIRichLabel : UIWidget
 	{
 		for (int i = 0; i < mList.size; ++i)
 		{
-			UILabelTest lbl = mList[i];
+			UIRichLabel lbl = mList[i];
 
 			if (lbl != null)
 			{
@@ -1192,15 +1182,15 @@ public class UIRichLabel : UIWidget
 		float regionX = mDrawRegion.z - mDrawRegion.x;
 		float regionY = mDrawRegion.w - mDrawRegion.y;
 
-		NGUIExText.rectWidth    = legacyMode ? (mMaxLineWidth  != 0 ? mMaxLineWidth  : 1000000) : width;
-		NGUIExText.rectHeight   = legacyMode ? (mMaxLineHeight != 0 ? mMaxLineHeight : 1000000) : height;
-		NGUIExText.regionWidth  = (regionX != 1f) ? Mathf.RoundToInt(NGUIExText.rectWidth  * regionX) : NGUIExText.rectWidth;
-		NGUIExText.regionHeight = (regionY != 1f) ? Mathf.RoundToInt(NGUIExText.rectHeight * regionY) : NGUIExText.rectHeight;
+		NGUIRichText.rectWidth    = legacyMode ? (mMaxLineWidth  != 0 ? mMaxLineWidth  : 1000000) : width;
+		NGUIRichText.rectHeight   = legacyMode ? (mMaxLineHeight != 0 ? mMaxLineHeight : 1000000) : height;
+		NGUIRichText.regionWidth  = (regionX != 1f) ? Mathf.RoundToInt(NGUIRichText.rectWidth  * regionX) : NGUIRichText.rectWidth;
+		NGUIRichText.regionHeight = (regionY != 1f) ? Mathf.RoundToInt(NGUIRichText.rectHeight * regionY) : NGUIRichText.rectHeight;
 
 		mFinalFontSize = Mathf.Abs(legacyMode ? Mathf.RoundToInt(cachedTransform.localScale.x) : defaultFontSize);
 		mScale = 1f;
 
-		if (NGUIExText.regionWidth < 1 || NGUIExText.regionHeight < 0)
+		if (NGUIRichText.regionWidth < 1 || NGUIRichText.regionHeight < 0)
 		{
 			mProcessedText = "";
 			return;
@@ -1219,14 +1209,14 @@ public class UIRichLabel : UIWidget
 
 		if (mOverflow ==UILabel.Overflow.ResizeFreely)
 		{
-			NGUIExText.rectWidth = 1000000;
-			NGUIExText.regionWidth = 1000000;
+			NGUIRichText.rectWidth = 1000000;
+			NGUIRichText.regionWidth = 1000000;
 		}
 
 		if (mOverflow ==UILabel.Overflow.ResizeFreely || mOverflow ==UILabel.Overflow.ResizeHeight)
 		{
-			NGUIExText.rectHeight = 1000000;
-			NGUIExText.regionHeight = 1000000;
+			NGUIRichText.rectHeight = 1000000;
+			NGUIRichText.regionHeight = 1000000;
 		}
 
 		if (mFinalFontSize > 0)
@@ -1239,18 +1229,18 @@ public class UIRichLabel : UIWidget
 				if (adjustSize)
 				{
 					mFinalFontSize = ps;
-					NGUIExText.fontSize = mFinalFontSize;
+					NGUIRichText.fontSize = mFinalFontSize;
 				}
 				else
 				{
 					mScale = (float)ps / mFinalFontSize;
-					NGUIExText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
+					NGUIRichText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
 				}
 
-				NGUIExText.Update(false);
+				NGUIRichText.Update(false);
 
 				// Wrap the text
-				bool fits = NGUIExText.WrapText(mText, out mProcessedText, true, false,
+				bool fits = NGUIRichText.WrapText(mText, out mProcessedText, true, false,
 					mOverflowEllipsis && mOverflow == UILabel.Overflow.ClampContent);
 
 				if (mOverflow ==UILabel.Overflow.ShrinkContent && !fits)
@@ -1260,7 +1250,7 @@ public class UIRichLabel : UIWidget
 				}
 				else if (mOverflow ==UILabel.Overflow.ResizeFreely)
 				{
-					mCalculatedSize = NGUIExText.CalculatePrintedSize(mProcessedText);
+					mCalculatedSize = NGUIRichText.CalculatePrintedSize(mProcessedText);
 
 					mWidth = Mathf.Max(minWidth, Mathf.RoundToInt(mCalculatedSize.x));
 					if (regionX != 1f) mWidth = Mathf.RoundToInt(mWidth / regionX);
@@ -1272,14 +1262,14 @@ public class UIRichLabel : UIWidget
 				}
 				else if (mOverflow ==UILabel.Overflow.ResizeHeight)
 				{
-					mCalculatedSize = NGUIExText.CalculatePrintedSize(mProcessedText);
+					mCalculatedSize = NGUIRichText.CalculatePrintedSize(mProcessedText);
 					mHeight = Mathf.Max(minHeight, Mathf.RoundToInt(mCalculatedSize.y));
 					if (regionY != 1f) mHeight = Mathf.RoundToInt(mHeight / regionY);
 					if ((mHeight & 1) == 1) ++mHeight;
 				}
 				else
 				{
-					mCalculatedSize = NGUIExText.CalculatePrintedSize(mProcessedText);
+					mCalculatedSize = NGUIRichText.CalculatePrintedSize(mProcessedText);
 				}
 
 				// Upgrade to the new system
@@ -1301,8 +1291,8 @@ public class UIRichLabel : UIWidget
 		
 		if (full)
 		{
-			NGUIExText.bitmapFont = null;
-			NGUIExText.dynamicFont = null;
+			NGUIRichText.bitmapFont = null;
+			NGUIRichText.dynamicFont = null;
 		}
 	}
 
@@ -1408,26 +1398,26 @@ public class UIRichLabel : UIWidget
 
 			UpdateNGUIExText();
 
-			if (precise) NGUIExText.PrintExactCharacterPositions(text, mTempVerts, mTempIndices);
-			else NGUIExText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
+			if (precise) NGUIRichText.PrintExactCharacterPositions(text, mTempVerts, mTempIndices);
+			else NGUIRichText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
 
 			if (mTempVerts.size > 0)
 			{
 				ApplyOffset(mTempVerts, 0);
 				int retVal = precise ?
-					NGUIExText.GetExactCharacterIndex(mTempVerts, mTempIndices, localPos) :
-					NGUIExText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
+					NGUIRichText.GetExactCharacterIndex(mTempVerts, mTempIndices, localPos) :
+					NGUIRichText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
 
 				mTempVerts.Clear();
 				mTempIndices.Clear();
 
-				NGUIExText.bitmapFont = null;
-				NGUIExText.dynamicFont = null;
+				NGUIRichText.bitmapFont = null;
+				NGUIRichText.dynamicFont = null;
 				return retVal;
 			}
 
-			NGUIExText.bitmapFont = null;
-			NGUIExText.dynamicFont = null;
+			NGUIRichText.bitmapFont = null;
+			NGUIRichText.dynamicFont = null;
 		}
 		return 0;
 	}
@@ -1476,7 +1466,7 @@ public class UIRichLabel : UIWidget
 				if (len > 0)
 				{
 					string word = mText.Substring(wordStart, len);
-					return NGUIExText.StripSymbols(word);
+					return NGUIRichText.StripSymbols(word);
 				}
 			}
 		}
@@ -1589,7 +1579,7 @@ public class UIRichLabel : UIWidget
 			int def = defaultFontSize;
 			UpdateNGUIExText();
 
-			NGUIExText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
+			NGUIRichText.PrintApproximateCharacterPositions(text, mTempVerts, mTempIndices);
 
 			if (mTempVerts.size > 0)
 			{
@@ -1608,7 +1598,7 @@ public class UIRichLabel : UIWidget
 						else if (key == KeyCode.End) localPos.x += 1000f;
 
 						// Find the closest character to this position
-						int retVal = NGUIExText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
+						int retVal = NGUIRichText.GetApproximateCharacterIndex(mTempVerts, mTempIndices, localPos);
 						if (retVal == currentIndex) break;
 
 						mTempVerts.Clear();
@@ -1620,8 +1610,8 @@ public class UIRichLabel : UIWidget
 				mTempIndices.Clear();
 			}
 
-			NGUIExText.bitmapFont = null;
-			NGUIExText.dynamicFont = null;
+			NGUIRichText.bitmapFont = null;
+			NGUIRichText.dynamicFont = null;
 
 			// If the selection doesn't move, then we're at the top or bottom-most line
 			if (key == KeyCode.UpArrow || key == KeyCode.Home) return 0;
@@ -1651,7 +1641,7 @@ public class UIRichLabel : UIWidget
 		if (highlight != null && start != end)
 		{
 			int startingVertices = highlight.verts.size;
-			NGUIExText.PrintCaretAndSelection(text, start, end, caret.verts, highlight.verts);
+			NGUIRichText.PrintCaretAndSelection(text, start, end, caret.verts, highlight.verts);
 
 			if (highlight.verts.size > startingVertices)
 			{
@@ -1666,7 +1656,7 @@ public class UIRichLabel : UIWidget
 				}
 			}
 		}
-		else NGUIExText.PrintCaretAndSelection(text, start, end, caret.verts, null);
+		else NGUIRichText.PrintCaretAndSelection(text, start, end, caret.verts, null);
 
 		// Fill the caret UVs and colors
 		ApplyOffset(caret.verts, startingCaretVerts);
@@ -1678,8 +1668,8 @@ public class UIRichLabel : UIWidget
 			caret.cols.Add(cc);
 		}
 
-		NGUIExText.bitmapFont = null;
-		NGUIExText.dynamicFont = null;
+		NGUIRichText.bitmapFont = null;
+		NGUIRichText.dynamicFont = null;
 	}
 
 	/// <summary>
@@ -1709,15 +1699,14 @@ public class UIRichLabel : UIWidget
 
 		UpdateNGUIExText();
 
-		NGUIExText.tint = col;
+		NGUIRichText.tint = col;
 
-		List<FaceSyn> slist = NGUIExText.Print(text, verts, uvs, cols);
-		ApplyFacesOffset(slist);
-		richLableAssist.Faces = slist;
+		List<AssistData> assetDataList = NGUIRichText.Print(text, verts, uvs, cols);
+		ApplyAssistOffset (assetDataList);
+		RichLabelAssist.assistDataList = assetDataList;
 
-		NGUIExText.bitmapFont = null;
-		NGUIExText.dynamicFont = null;
-
+		NGUIRichText.bitmapFont = null;
+		NGUIRichText.dynamicFont = null;
 		// Center the content within the label vertically
 		Vector2 pos = ApplyOffset(verts, start);
 
@@ -1777,8 +1766,30 @@ public class UIRichLabel : UIWidget
 
 		if (onPostFill != null)
 			onPostFill(this, offset, verts, uvs, cols);
+	}
 
-		AdjustAssist();
+	protected Vector2 ApplyAssistOffset (List<AssistData> list)
+	{
+		Vector2 po = pivotOffset;
+		
+		float fx = Mathf.Lerp(0f, -mWidth, po.x);
+		float fy = Mathf.Lerp(mHeight, 0f, po.y) + Mathf.Lerp((mCalculatedSize.y - mHeight), 0f, po.y);
+		
+		fx = Mathf.Round(fx);
+		fy = Mathf.Round(fy);
+		
+		for (int i = 0; i < list.Count; i++) {
+			AssistData face = list[i];
+			face.pos1.x += fx;
+			face.pos1.y += fy;
+			face.pos2.x += fx;
+			face.pos2.y += fy;
+			face.pos3.x += fx;
+			face.pos3.y += fy;
+			face.pos4.x += fx;
+			face.pos4.y += fy;
+		}
+		return new Vector2(fx, fy);
 	}
 
 	/// <summary>
@@ -1857,11 +1868,11 @@ public class UIRichLabel : UIWidget
 	public int CalculateOffsetToFit (string text)
 	{
 		UpdateNGUIExText();
-		NGUIExText.encoding = false;
-		NGUIExText.symbolStyle = NGUIExText.SymbolStyle.None;
-		int offset = NGUIExText.CalculateOffsetToFit(text);
-		NGUIExText.bitmapFont = null;
-		NGUIExText.dynamicFont = null;
+		NGUIRichText.encoding = false;
+		NGUIRichText.symbolStyle = NGUIRichText.SymbolStyle.None;
+		int offset = NGUIRichText.CalculateOffsetToFit(text);
+		NGUIRichText.bitmapFont = null;
+		NGUIRichText.dynamicFont = null;
 		return offset;
 	}
 
@@ -1915,11 +1926,11 @@ public class UIRichLabel : UIWidget
 	public bool Wrap (string text, out string final, int height)
 	{
 		UpdateNGUIExText();
-		NGUIExText.rectHeight = height;
-		NGUIExText.regionHeight = height;
-		bool retVal = NGUIExText.WrapText(text, out final);
-		NGUIExText.bitmapFont = null;
-		NGUIExText.dynamicFont = null;
+		NGUIRichText.rectHeight = height;
+		NGUIRichText.regionHeight = height;
+		bool retVal = NGUIRichText.WrapText(text, out final);
+		NGUIRichText.bitmapFont = null;
+		NGUIRichText.dynamicFont = null;
 		return retVal;
 	}
 
@@ -1932,62 +1943,62 @@ public class UIRichLabel : UIWidget
 		Font ttf = trueTypeFont;
 		bool isDynamic = (ttf != null);
 
-		NGUIExText.fontSize = mFinalFontSize;
-		NGUIExText.fontStyle = mFontStyle;
-		NGUIExText.rectWidth = mWidth;
-		NGUIExText.rectHeight = mHeight;
-		NGUIExText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
-		NGUIExText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
-		NGUIExText.gradient = mApplyGradient && (mFont == null || !mFont.packedFontShader);
-		NGUIExText.gradientTop = mGradientTop;
-		NGUIExText.gradientBottom = mGradientBottom;
-		NGUIExText.encoding = mEncoding;
-		NGUIExText.premultiply = mPremultiply;
-		NGUIExText.symbolStyle = mSymbols;
-		NGUIExText.maxLines = mMaxLineCount;
-		NGUIExText.spacingX = effectiveSpacingX;
-		NGUIExText.spacingY = effectiveSpacingY;
-		NGUIExText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
-        NGUIExText.faceAtlas = mAtlas;
+		NGUIRichText.fontSize = mFinalFontSize;
+		NGUIRichText.fontStyle = mFontStyle;
+		NGUIRichText.rectWidth = mWidth;
+		NGUIRichText.rectHeight = mHeight;
+		NGUIRichText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
+		NGUIRichText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
+		NGUIRichText.gradient = mApplyGradient && (mFont == null || !mFont.packedFontShader);
+		NGUIRichText.gradientTop = mGradientTop;
+		NGUIRichText.gradientBottom = mGradientBottom;
+		NGUIRichText.encoding = mEncoding;
+		NGUIRichText.premultiply = mPremultiply;
+		NGUIRichText.symbolStyle = mSymbols;
+		NGUIRichText.maxLines = mMaxLineCount;
+		NGUIRichText.spacingX = effectiveSpacingX;
+		NGUIRichText.spacingY = effectiveSpacingY;
+		NGUIRichText.fontScale = isDynamic ? mScale : ((float)mFontSize / mFont.defaultSize) * mScale;
+        NGUIRichText.atlas = mAtlas;
 
         if (mFont != null)
 		{
-			NGUIExText.bitmapFont = mFont;
+			NGUIRichText.bitmapFont = mFont;
 			
 			for (; ; )
 			{
-				UIFont fnt = NGUIExText.bitmapFont.replacement;
+				UIFont fnt = NGUIRichText.bitmapFont.replacement;
 				if (fnt == null) break;
-				NGUIExText.bitmapFont = fnt;
+				NGUIRichText.bitmapFont = fnt;
 			}
 
-			if (NGUIExText.bitmapFont.isDynamic)
+			if (NGUIRichText.bitmapFont.isDynamic)
 			{
-				NGUIExText.dynamicFont = NGUIExText.bitmapFont.dynamicFont;
-				NGUIExText.bitmapFont = null;
+				NGUIRichText.dynamicFont = NGUIRichText.bitmapFont.dynamicFont;
+				NGUIRichText.bitmapFont = null;
 			}
-			else NGUIExText.dynamicFont = null;
+			else NGUIRichText.dynamicFont = null;
 		}
 		else
 		{
-			NGUIExText.dynamicFont = ttf;
-			NGUIExText.bitmapFont = null;
+			NGUIRichText.dynamicFont = ttf;
+			NGUIRichText.bitmapFont = null;
 		}
 
 		if (isDynamic && keepCrisp)
 		{
 			UIRoot rt = root;
-			if (rt != null) NGUIExText.pixelDensity = (rt != null) ? rt.pixelSizeAdjustment : 1f;
+			if (rt != null) NGUIRichText.pixelDensity = (rt != null) ? rt.pixelSizeAdjustment : 1f;
 		}
-		else NGUIExText.pixelDensity = 1f;
+		else NGUIRichText.pixelDensity = 1f;
 
-		if (mDensity != NGUIExText.pixelDensity)
+		if (mDensity != NGUIRichText.pixelDensity)
 		{
 			ProcessText(false, false);
-			NGUIExText.rectWidth = mWidth;
-			NGUIExText.rectHeight = mHeight;
-			NGUIExText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
-			NGUIExText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
+			NGUIRichText.rectWidth = mWidth;
+			NGUIRichText.rectHeight = mHeight;
+			NGUIRichText.regionWidth = Mathf.RoundToInt(mWidth * (mDrawRegion.z - mDrawRegion.x));
+			NGUIRichText.regionHeight = Mathf.RoundToInt(mHeight * (mDrawRegion.w - mDrawRegion.y));
 		}
 
 		if (alignment == Alignment.Automatic)
@@ -1996,54 +2007,21 @@ public class UIRichLabel : UIWidget
 
 			if (p == Pivot.Left || p == Pivot.TopLeft || p == Pivot.BottomLeft)
 			{
-				NGUIExText.alignment = Alignment.Left;
+				NGUIRichText.alignment = Alignment.Left;
 			}
 			else if (p == Pivot.Right || p == Pivot.TopRight || p == Pivot.BottomRight)
 			{
-				NGUIExText.alignment = Alignment.Right;
+				NGUIRichText.alignment = Alignment.Right;
 			}
-			else NGUIExText.alignment = Alignment.Center;
+			else NGUIRichText.alignment = Alignment.Center;
 		}
-		else NGUIExText.alignment = alignment;
+		else NGUIRichText.alignment = alignment;
 
-		NGUIExText.Update();
+		NGUIRichText.Update();
 	}
 
 	void OnApplicationPause (bool paused)
 	{
 		if (!paused && mTrueTypeFont != null) Invalidate(false);
-	}
-
-	protected Vector2 ApplyFacesOffset (List<FaceSyn> list)
-	{
-		Vector2 po = pivotOffset;
-
-		float fx = Mathf.Lerp(0f, -mWidth, po.x);
-		float fy = Mathf.Lerp(mHeight, 0f, po.y) + Mathf.Lerp((mCalculatedSize.y - mHeight), 0f, po.y);
-
-		fx = Mathf.Round(fx);
-		fy = Mathf.Round(fy);
-
-		for (int i = 0; i < list.Count; i++) {
-			FaceSyn face = list[i];
-			if (face.poses != null && face.poses.size == 4) {
-				for (int j = 0; j < 4; j++) {
-					face.poses.buffer[j].x += fx;
-					face.poses.buffer[j].y += fy;
-				}
-
-			}
-		}
-		return new Vector2(fx, fy);
-	}
-
-	private void AdjustAssist ()
-	{
-		if (richLableAssist == null)
-			return;
-		richLableAssist.pivot = pivot;
-		richLableAssist.width = width;
-		richLableAssist.height = mHeight;
-		richLableAssist.cachedTransform.localPosition = Vector3.zero;
 	}
 }

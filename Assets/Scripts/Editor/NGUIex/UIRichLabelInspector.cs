@@ -11,7 +11,7 @@ using UnityEditor;
 
 [CanEditMultipleObjects]
 [CustomEditor(typeof(UIRichLabel), true)]
-public class UILabelTestInspector : UIWidgetInspector
+public class UIRichLabelInspector : UIWidgetInspector
 {
 	public enum FontType
 	{
