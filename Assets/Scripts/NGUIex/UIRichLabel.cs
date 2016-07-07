@@ -1130,7 +1130,17 @@ public class UIRichLabel : UIWidget
 
 	protected override void OnStart ()
 	{
-		base.OnStart();
+#if UNITY_EDITOR
+		if (GetComponent<UIPanel>() != null)
+		{
+			Debug.LogError("Widgets and panels should not be on the same object! Widget must be a child of the panel.", this);
+		}
+		else if (!Application.isPlaying && GetComponents<UIWidget>().Length > 1)
+		{
+			//Debug.LogError("You should not place more than one widget on the same object. Weird stuff will happen!", this);
+		}
+#endif
+		CreatePanel();
 
 		// Legacy support
 		if (mLineWidth > 0f)
