@@ -1,8 +1,3 @@
-//----------------------------------------------
-//            NGUI: Next-Gen UI kit
-// Copyright © 2011-2015 Tasharen Entertainment
-//----------------------------------------------
-
 #if !UNITY_3_5
 #define DYNAMIC_FONT
 #endif
@@ -16,7 +11,7 @@ using System.Collections.Generic;
 /// Helper class containing functionality related to using dynamic fonts.
 /// </summary>
 
-static public partial class NGUIRichText
+static public class NGUIRichText
 {
 	public enum Alignment
 	{
